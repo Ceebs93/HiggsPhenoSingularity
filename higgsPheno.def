@@ -1,0 +1,106 @@
+# to run me either do
+# singularity run --containall --bind /my/out/dir/ higgsPheno.sif
+#     the "--containall" flag prevents interactions with your system
+#     the "--bind /my/out/dir/" mounts a directory in your system
+#     this allows scripts in that directory to be accessed from the image
+#     and results from the image to persist in the directory
+####
+# or as an interactive shell 
+# singularity shell --containall --bind /my/out/dir/ higgsPheno.sif
+####
+# finally you can execute a command in them image with
+# singularity exec --containall --bind /my/out/dir/ higgsPheno.sif 
+BootStrap: docker
+From: ubuntu:18.04
+    
+# commands on the host system
+%setup
+    # make print colour #
+    GREEN='\033[0;32m'
+    NOCOLOUR='\033[0m'
+    echo "${GREEN}~~~ Getting modified packages from github ~~~ ${NOCOLOUR}"
+    export PACKAGES_TMP=/tmp/packages
+    rm -fr $PACKAGES_TMP
+    mkdir -p $PACKAGES_TMP
+    git clone https://github.com/HenryDayHall/higgsPhenoPackages.git $PACKAGES_TMP
+    cp -R ${PACKAGES_TMP} ${SINGULARITY_ROOTFS}
+
+# get files from the host (but we dont need any)
+%files
+
+# what is done when the container is built
+%post
+    # make print colour #
+    GREEN='\033[0;32m'
+    NOCOLOUR='\033[0m'
+    # start
+    echo "${GREEN}~~~ install apt packages ~~~ ${NOCOLOUR}"
+    apt -y update
+    # for scripts
+    apt -y install python2.7
+    # for fetching from repos if needed
+    apt -y install git
+    # for getting anything else from the net
+    apt -y install wget
+    # text editors
+    apt -y install vim-tiny
+    apt -y install nano
+    # for making downloaded packages
+    apt -y install make
+    # for compiling 2HDMC
+    apt -y install libgsl-dev
+    apt -y install g++
+
+    echo "${GREEN}~~~ Set up a .bashrc ~~~ ${NOCOLOUR}"
+    BASHRC=/home/.bashrc
+    touch $BASHRC
+    echo "alias vim=vim.tiny\n" >> $BASHRC
+    echo "alias python=python2.7\n" >> $BASHRC
+    
+    echo "${GREEN}~~~ Making the packages ~~~ ${NOCOLOUR}"
+    echo "${GREEN}~~~ 2HDMC ~~~ ${NOCOLOUR}"
+    cd /packages/2HDMC
+    #make
+    #make lib
+
+    ## Not working???
+    ## the /home/ directory appears empty
+    # echo "${GREEN}~~~ Getting modified packages from github ~~~ ${NOCOLOUR}"
+    # MY_HOME = $(ls -l /home/)
+    # export PACKAGES=$MY_HOME/packages/
+    # mv /packages $PACKAGES
+
+# enviroment variabels instide the container
+# sourced at run time not build time
+%environment
+    export PACKAGES=/packages/
+    export BASHRC=/home/.bashrc
+
+
+# this is executed when the contain is launched with
+# singularity run higgsPheno.sif
+%runscript
+    echo $BASHRC
+    /bin/bash --rcfile $BASHRC
+    
+
+# this would be executed just after build
+%test
+    echo I havent written any tests
+
+# metadata
+%labels
+    Author HenryDayHall
+    Version v1.0
+
+%help
+    to run me either do
+    >singularity run --containall --bind /my/out/dir/ higgsPheno.sif
+         the "--containall" flag prevents interactions with your system
+         the "--bind /my/out/dir/" mounts a directory in your system
+         this allows scripts in that directory to be accessed from the image
+         and results from the image to persist in the directory
+     or as an interactive shell 
+    >singularity shell --containall --bind /my/out/dir/ higgsPheno.sif
+     finally you can execute a command in them image with
+    >singularity exec --containall --bind /my/out/dir/ higgsPheno.sif 
