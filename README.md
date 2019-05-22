@@ -1,5 +1,8 @@
 # HiggsPhenoSingularity
 The repo for the singularity container that runs packages assocated with higgs phenominology.
+## Aim
+To run the packages found in 
+https://github.com/HenryDayHall/higgsPhenoPackages
 ## Instructions
 Make sure that singularity is installed;
 ```
@@ -18,4 +21,5 @@ run the container
 ```
 singularity run --containall higgsPheno.sif
 ```
+
 
