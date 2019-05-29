@@ -14,21 +14,11 @@ BootStrap: docker
 From: ubuntu:18.04
     
 # commands on the host system
+# try to avoid doing stuff here
 %setup
-    # make print colour #
-    GREEN='\033[0;32m'
-    NOCOLOUR='\033[0m'
-    echo "${GREEN}~~~ Getting modified packages from github ~~~ ${NOCOLOUR}"
-    export PACKAGES_TMP=/tmp/packages
-    rm -fr $PACKAGES_TMP
-    mkdir -p $PACKAGES_TMP
-    git clone https://github.com/HenryDayHall/higgsPhenoPackages.git $PACKAGES_TMP
-    cp -R ${PACKAGES_TMP} ${SINGULARITY_ROOTFS}
 
 # get files from the host (but we dont need any)
 %files
-    /home/henry/Programs/singularity_conts/higgsPheno/host_test a
-    /home/henry/Programs/singularity_conts/higgsPheno/host_test_file b
 
 # what is done when the container is built
 %post
@@ -38,47 +28,30 @@ From: ubuntu:18.04
     # start
     echo "${GREEN}~~~ install apt packages ~~~ ${NOCOLOUR}"
     apt -y update
-    # for scripts
-    apt -y install python2.7
-    # for fetching from repos if needed
-    apt -y install git
-    # for getting anything else from the net
-    apt -y install wget
-    # text editors
-    apt -y install vim-tiny
-    apt -y install nano
-    # for making downloaded packages
-    apt -y install make
-    # for compiling 2HDMC
-    apt -y install libgsl-dev
-    apt -y install g++
+    apt -y install python2.7 git wget vim-tiny nano make libgsl-dev g++
 
-    echo "${GREEN}~~~ Set up a .bashrc ~~~ ${NOCOLOUR}"
-    BASHRC=/home/.bashrc
-    touch $BASHRC
-    echo "alias vim=vim.tiny\n" >> $BASHRC
-    echo "alias python=python2.7\n" >> $BASHRC
-    # will be called in run
-
-    ## Not working???
-    ## the /home/ directory appears empty
-    # echo "${GREEN}~~~ Move packages to home dir ~~~ ${NOCOLOUR}"
-    MY_HOME=$(ls -l /home/)
-    echo in post home is $MY_HOME
-    echo $USER
-    # PACKAGES=$MY_HOME/packages/
-    # mv /packages $PACKAGES
-    
     #echo "${GREEN}~~~ Give the user permission and control ~~~ ${NOCOLOUR}"
-    PACKAGES=/packages
-    #chown -R $USER $PACKAGES
-    #chmod -R 766 $PACKAGES
+    umask 000
+
+    echo "${GREEN}~~~ Getting modified packages from github ~~~ ${NOCOLOUR}"
+    PACKAGES=$SINGULAITY_ROOTFS/packages
+    git clone https://github.com/HenryDayHall/higgsPhenoPackages.git $PACKAGES
+
     echo "${GREEN}~~~ Making the packages ~~~ ${NOCOLOUR}"
     echo "${GREEN}~~~ 2HDMC ~~~ ${NOCOLOUR}"
     cd $PACKAGES/2HDMC
     # for some reason the lib dir is not automaticaly constructed
     mkdir lib
     make
+
+    echo "${GREEN}~~~ Set up a .bashrc ~~~ ${NOCOLOUR}"
+    BASHRC=/home/.bashrc
+    touch $BASHRC
+    # will be called in run
+
+    echo "${GREEN}~~~ Create sylinks for programs ~~~ ${NOCOLOUR}"
+    ln -s $(which vim-tiny) /usr/local/bin/vim
+    ln -s $(which python2.7) /usr/local/bin/python
 
 
 # enviroment variabels instide the container
@@ -94,20 +67,14 @@ From: ubuntu:18.04
     # make print colour #
     GREEN='\033[0;32m'
     NOCOLOUR='\033[0m'
-    cp -r /packages/* ~/
-    echo "${GREEN}Test me with" 
-    echo "\$ cd 2HDMC"
-    echo "\$ make test2HDMC"
-    echo "\$ ./test2HDMC ${NOCOLOUR}"
+    echo "${GREEN}~~~ Link packages to the users home directory ~~~ ${NOCOLOUR}"
+    ln -s /packages/2HDMC ~/
     /bin/bash --rcfile $BASHRC
     
 
 # this would be executed just after build
 %test
     echo I havent written any tests
-    MY_HOME=$(ls -l /home/)
-    echo in test home is $MY_HOME
-    echo $USER
 
 # metadata
 %labels
