@@ -41,7 +41,6 @@ From: ubuntu:18.04
     echo "${GREEN}~~~ 2HDMC ~~~ ${NOCOLOUR}"
     cd $PACKAGES/2HDMC
     # for some reason the lib dir is not automaticaly constructed
-    mkdir lib
     make
 
     echo "${GREEN}~~~ Set up a .bashrc ~~~ ${NOCOLOUR}"
